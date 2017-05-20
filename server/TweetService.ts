@@ -50,6 +50,9 @@ export class TweetService {
       this.tweets = this.tweets.concat((await this.getTweets(user)).map(this.stripTweet));
     }
     this.tweets = this.tweets.filter(tweet => !!tweet);
+
+    // Update cache periodically
+    setTimeout(this.updateCache, 60 * 60 * 1000);
   }
 
   private async getTweets(user): Promise<any> {
