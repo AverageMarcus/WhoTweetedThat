@@ -53,6 +53,14 @@ export class Server {
 
       this.server.route({
         method: 'GET',
+        path:'/room/{roomCode}',
+        handler: (request, reply) => {
+          return reply.view('spectate', { roomCode: request.params.roomCode });
+        }
+      });
+
+      this.server.route({
+        method: 'GET',
         path:'/start/{roomCode}',
         handler: (request, reply) => {
           this.game.start(request.params.roomCode);

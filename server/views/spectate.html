@@ -1,0 +1,23 @@
+<h2><small>Room Code:</small><br>{{roomCode}}</h2>
+
+<script>
+  var playerCount = document.querySelector('.players-count');
+  var socket = io.connect('/{{roomCode}}');
+  socket.on('tweet', processTweet);
+  socket.on('endRound', processWinners);
+  socket.on('join', function(data) {
+    playerCount.dataset.badge = parseInt(playerCount.dataset.badge, 10) + 1;
+    var template = document.getElementById('playerTemplate').innerHTML;
+    Mustache.parse(template, ['[[', ']]']);
+    var player = Mustache.render(template, data)
+    document.getElementById('players').innerHTML += player;
+  });
+
+  socket.on('endResults', function(data) {
+    var template = document.getElementById('endResultsTemplate').innerHTML;
+    Mustache.parse(template, ['[[', ']]']);
+    var results = Mustache.render(template, { winners: data })
+    document.getElementById('results').innerHTML = results;
+    document.getElementById('results').style.display = 'block';
+  });
+</script>
