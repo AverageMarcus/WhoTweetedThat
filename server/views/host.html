@@ -47,7 +47,6 @@
   socket.on('endResults', function(data) {
     var template = document.getElementById('endResultsTemplate').innerHTML;
     Mustache.parse(template, ['[[', ']]']);
-    console.log(data);
     var results = Mustache.render(template, { winners: data })
     document.getElementById('results').innerHTML = results;
     document.getElementById('results').style.display = 'block';

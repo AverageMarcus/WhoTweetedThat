@@ -111,7 +111,7 @@
 
       socket.on('endResults', function(data) {
         document.querySelector('.tweet').style.display = 'none';
-        if (data.find(winner => winner === user.name)) {
+        if (data.find(winner => winner.name === user.name)) {
           alert('Congratulations');
         } else {
           alert('Better luck next time');
