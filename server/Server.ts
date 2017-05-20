@@ -27,7 +27,6 @@ export class Server {
       });
 
       this.server.connection({
-        host: 'localhost',
         port: process.env.PORT
       });
 
