@@ -1,0 +1,65 @@
+<h2><small>Room Code:</small><br>{{roomCode}}</h2>
+
+<div id="setup">
+  <div class="mdl-grid">
+    <div class="mdl-cell mdl-cell--12-col">
+      <button id="startGame" class="mdl-button mdl-js-button mdl-button--raised mdl-button--accent">
+        Start Game
+      </button>
+    </div>
+  </div>
+
+  <div>
+    <h3><span class="mdl-badge players-count" data-badge="0">Players</span></h3>
+    <div id="players">
+    </div>
+  </div>
+</div>
+
+<div class="hide" id="end">
+  <div class="mdl-grid">
+    <div class="mdl-cell mdl-cell--12-col">
+      <button id="endGame" class="mdl-button mdl-js-button mdl-button--raised mdl-button--accent">
+        End Game
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var playerCount = document.querySelector('.players-count');
+  var socket = io.connect('/{{roomCode}}');
+  socket.on('start', function(data) {
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('end').style.display = 'block';
+
+    socket.on('tweet', processTweet);
+    socket.on('endRound', processWinners);
+  });
+  socket.on('join', function(data) {
+    playerCount.dataset.badge = parseInt(playerCount.dataset.badge, 10) + 1;
+    var template = document.getElementById('playerTemplate').innerHTML;
+    Mustache.parse(template, ['[[', ']]']);
+    var player = Mustache.render(template, data)
+    document.getElementById('players').innerHTML += player;
+  });
+
+  socket.on('endResults', function(data) {
+    var template = document.getElementById('endResultsTemplate').innerHTML;
+    Mustache.parse(template, ['[[', ']]']);
+    console.log(data);
+    var results = Mustache.render(template, { winners: data })
+    document.getElementById('results').innerHTML = results;
+    document.getElementById('results').style.display = 'block';
+  });
+
+  document.getElementById('startGame').addEventListener('click', function(event) {
+    event.preventDefault();
+    fetch('/start/{{roomCode}}');
+  });
+
+  document.getElementById('endGame').addEventListener('click', function(event) {
+    event.preventDefault();
+    fetch('/stop/{{roomCode}}');
+  });
+</script>

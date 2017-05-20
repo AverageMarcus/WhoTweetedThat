@@ -1,0 +1,123 @@
+<div class="intro mdl-grid">
+  <form id="joinForm">
+    <div class="mdl-cell mdl-cell--12-col">
+      <div class="mdl-textfield mdl-js-textfield">
+        <input class="mdl-textfield__input" type="text" id="name" required>
+        <label class="mdl-textfield__label" for="name">Name</label>
+      </div>
+    </div>
+    <div class="mdl-cell mdl-cell--12-col photo-row">
+      <video class="camera_stream"></video>
+      <canvas></canvas>
+      <img class="photo" />
+      <button id="takePhoto" class="mdl-button mdl-js-button mdl-button--raised">
+        Take Photo
+      </button>
+    </div>
+    <div class="mdl-cell mdl-cell--12-col">
+      <div class="mdl-textfield mdl-js-textfield">
+        <input class="mdl-textfield__input" type="text" id="roomCode" required>
+        <label class="mdl-textfield__label" for="roomCode">Room Code</label>
+      </div>
+    </div>
+    <div class="mdl-cell mdl-cell--12-col">
+      <button id="joinRoom" class="mdl-button mdl-js-button mdl-button--raised mdl-button--accent">
+        Join Game
+      </button>
+    </div>
+  </form>
+</div>
+
+<div class="waiting mdl-grid hide">
+  <div class="mdl-cell mdl-cell--12-col">
+    <h2>Waiting for other players to join the game</h2>
+    <div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active"></div>
+  </div>
+</div>
+
+<script>
+  navigator.getUserMedia({ video: true },
+    function(stream){
+      var video = document.querySelector('video.camera_stream');
+      video.src = window.URL.createObjectURL(stream);
+      video.play();
+      document.getElementById('takePhoto').addEventListener('click', function(event) {
+        event.preventDefault();
+        takeSnapshot();
+      })
+    },
+    function(err){
+      document.querySelector('.photo-row').style.display = 'none';
+    }
+  );
+
+  function takeSnapshot(){
+    var hidden_canvas = document.querySelector('canvas');
+    var video = document.querySelector('video.camera_stream');
+    var image = document.querySelector('img.photo');
+    var width = video.videoWidth;
+    var height = video.videoHeight;
+    var context = hidden_canvas.getContext('2d');
+
+    hidden_canvas.width = width;
+    hidden_canvas.height = height;
+    context.drawImage(video, 0, 0, width, height);
+
+    var imageDataURL = hidden_canvas.toDataURL('image/png');
+    image.setAttribute('src', imageDataURL);
+
+    video.style.display = 'none';
+    image.style.display = 'block';
+    document.getElementById('takePhoto').style.display = 'none';
+  }
+</script>
+
+<script>
+  document.getElementById('joinRoom').addEventListener('click', function(event) {
+    event.preventDefault();
+    if (document.getElementById('joinForm').checkValidity()) {
+      document.querySelector('.intro').style.display = 'none';
+      document.querySelector('.waiting').style.display = 'block';
+      var user = {
+        name: document.getElementById('name').value.toUpperCase(),
+        photo: document.querySelector('canvas').toDataURL('image/png')
+      };
+
+      var socket = io('/' + document.getElementById('roomCode').value.toUpperCase()).connect();
+      socket.emit('join', user);
+
+      window.answer = function(chosen, choice) {
+        if (chosen.classList.contains('disabled') || chosen.classList.contains('selected')) {
+          return;
+        }
+
+        chosen.classList.add('selected');
+
+        [].slice.call(document.querySelectorAll('.player-card-image')).forEach(function(btn) {
+          if (btn !== chosen) {
+            btn.classList.add('disabled');
+          }
+        });
+
+        socket.emit('choice', {
+          answer: choice,
+          user: user
+        });
+      };
+
+      socket.on('tweet', processTweet);
+
+      socket.on('endRound', processWinners);
+
+      socket.on('endResults', function(data) {
+        document.querySelector('.tweet').style.display = 'none';
+        if (data.find(winner => winner === user.name)) {
+          alert('Congratulations');
+        } else {
+          alert('Better luck next time');
+        }
+        window.location = window.location;
+      });
+    }
+  });
+</script>
