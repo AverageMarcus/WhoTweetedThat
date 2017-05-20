@@ -65,6 +65,19 @@ export class Game {
   }
 
   private nextRound(roomCode: string) {
+    const send = () => {
+      const tweet = this.tweetService.getTweet();
+      this.games[roomCode].rounds.push({
+        tweet: tweet.tweet,
+        answers: []
+      });
+      this.socket.of(`/${roomCode}`).emit('tweet', {
+        text: tweet.text,
+        choices: tweet.choices
+      });
+      this.games[roomCode].timeoutId = setTimeout(() => this.nextRound(roomCode), this.roundTime);
+    }
+
     if (this.games[roomCode].rounds && this.games[roomCode].rounds.length) {
       // Announce winners
       const round = this.games[roomCode].rounds[this.games[roomCode].rounds.length - 1];
@@ -79,17 +92,9 @@ export class Game {
         winners: winners,
         losers: losers
       });
+      setTimeout(send, 3000);
+    } else {
+      send();
     }
-
-    const tweet = this.tweetService.getTweet();
-    this.games[roomCode].rounds.push({
-      tweet: tweet.tweet,
-      answers: []
-    });
-    this.socket.of(`/${roomCode}`).emit('tweet', {
-      text: tweet.text,
-      choices: tweet.choices
-    });
-    this.games[roomCode].timeoutId = setTimeout(() => this.nextRound(roomCode), this.roundTime);
   }
 }
